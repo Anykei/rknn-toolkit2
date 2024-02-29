@@ -17,11 +17,11 @@ matplotlib.use('Agg')
 # IMG_PATH = './bus.jpg'
 # DATASET = './dataset.txt'
 
-ONNX_MODEL = 'rknn-toolkit2/examples/onnx/yolov8_face_detector/face_detection_yolo/runs/detect/train/weights/best.onnx'
+ONNX_MODEL = './face_detection_yolo/runs/detect/train3/weights/best.onnx'
 RKNN_MODEL = '_x.rknn'
 DATASET = './dataset.txt'
 
-QUANTIZE_ON = False
+QUANTIZE_ON = True
 
 OBJ_THRESH = 0.25
 NMS_THRESH = 0.45
@@ -59,13 +59,15 @@ if __name__ == '__main__':
 
     # pre-process config
     print('--> Config model')
-    rknn.config(mean_values=[[0, 0, 0]], std_values=[[255, 255, 255]], target_platform='rk3588',
-                quantized_method='channel', quantized_algorithm='mmse')
+    rknn.config(mean_values=[[128, 128, 128]], std_values=[[128, 128, 128]], target_platform='rk3588',optimization_level=1,
+                 quantized_algorithm='kl_divergence')#,
+                # quantized_method='channel', quantized_algorithm='mmse')1
     print('done')
 
     # Load ONNX model
     print('--> Loading model')
-    ret = rknn.load_onnx(model=ONNX_MODEL)
+    # ret = rknn.load_onnx(model=ONNX_MODEL)
+    ret = rknn.load_tflite(model="best_float32.tflite")
     if ret != 0:
         print('Load model failed!')
         exit(ret)
@@ -79,8 +81,9 @@ if __name__ == '__main__':
         exit(ret)
     print('done')
 
-    # print('--> Accuracy analysis')
-    # ret = rknn.accuracy_analysis(inputs=[IMG_PATH], output_dir=None)
+    print('--> Accuracy analysis')
+
+    # ret = rknn.accuracy_analysis(inputs=['/home/an_nemenko/repo/tmp/rknn-toolkit2/rknn-toolkit2/examples/onnx/yolov5/bus.jpg'], output_dir=None)
     # if ret != 0:
     #     print('Accuracy analysis failed!')
     #     exit(ret)
@@ -102,6 +105,9 @@ if __name__ == '__main__':
         exit(ret)
     print('done')
 
+    # ret = rknn.init_runtime(target='rk3588', perf_debug=True)
+    # perf_detail = rknn.eval_perf()
+    # print(perf_detail)
 
     def show(img):
         cv2.imshow("image", img)
@@ -109,7 +115,7 @@ if __name__ == '__main__':
             return
 
 
-    img_path = './face_detection_yolo/train/images/'
+    img_path = './drones'
     img_files = os.listdir(img_path)
     num_img_files = len(img_files)
     print(f'Количество файлов в папке с изображениями: {num_img_files}')
@@ -151,7 +157,7 @@ if __name__ == '__main__':
                     outputs[0][i][2],
                     outputs[0][i][3],
                 ]
-                boxes.append(box)
+                boxes.append(np.array(box)*640)
                 scores.append(maxScore)
                 class_ids.append(maxClassIndex)
 

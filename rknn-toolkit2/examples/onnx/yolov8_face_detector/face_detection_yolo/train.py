@@ -1,7 +1,9 @@
 from ultralytics import YOLO
+# from ultralytics.nn.modules import *
 
-# model = YOLO("yolov8n.yaml")  # build a new model from scratch
-model = YOLO("yolov8n.pt")
+# Re
+model = YOLO("yolov8n_custom.yaml").load("yolov8n.pt")  # build a new model from scratch
+# model = YOLO("yolov8n.pt")
 
 model.train(data="data.yaml", epochs=10)
 
